@@ -22,15 +22,32 @@ class TCPSender {
 
     //! outbound queue of segments that the TCPSender wants sent
     std::queue<TCPSegment> _segments_out{};
+    std::queue<TCPSegment> _segments_wait{};
 
     //! retransmission timer for the connection
     unsigned int _initial_retransmission_timeout;
-
+    // 当前的RTO
+    unsigned int _retransmission_timeout;
+    // 连续重传次数
+    uint16_t _retransmission_count = 0;
+    size_t _cur_time = 0;
+    bool _timer_running = false;
     //! outgoing stream of bytes that have not yet been sent
     ByteStream _stream;
 
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
+    // ack
+    uint64_t _recv_seqno{0};
+
+    bool _syn = false;
+    bool _fin = false;
+
+    // 尚在发送中的数据大小
+    uint64_t bytes_in_flight_ = 0;
+    // 接收方的窗口大小
+    uint16_t receiver_window_size_ = 0;
+    void send_seg(TCPSegment &msg);
 
   public:
     //! Initialize a TCPSender

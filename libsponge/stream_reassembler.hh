@@ -15,6 +15,14 @@ class StreamReassembler {
     ByteStream _output;  //!< The reassembled in-order byte stream
     size_t _capacity;    //!< The maximum number of bytes
 
+    uint64_t _reassembler_bufsize = 0;
+    uint64_t _first_unassembled_index = 0;
+    bool _is_last_substr = false;
+    std::list<std::pair<uint64_t, std::string>> _reassembler_buf{};
+
+    void insert_buf(uint64_t first_index, std::string &&data, bool is_last);
+    void pop_buf();
+
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
     //! \note This capacity limits both the bytes that have been reassembled,

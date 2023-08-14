@@ -15,7 +15,7 @@ using namespace std;
 //! \param isn The initial sequence number
 WrappingInt32 wrap(uint64_t n, WrappingInt32 isn) {
     DUMMY_CODE(n, isn);
-    return WrappingInt32{0};
+    return isn + n;
 }
 
 //! Transform a WrappingInt32 into an "absolute" 64-bit sequence number (zero-indexed)
@@ -30,5 +30,13 @@ WrappingInt32 wrap(uint64_t n, WrappingInt32 isn) {
 //! has a different ISN.
 uint64_t unwrap(WrappingInt32 n, WrappingInt32 isn, uint64_t checkpoint) {
     DUMMY_CODE(n, isn, checkpoint);
-    return {};
+    //    return {};
+    auto check_32 = wrap(checkpoint, isn);
+    uint64_t distance = n.raw_value() - check_32.raw_value();
+    // 右边更近 || 第一圈
+    if (distance <= (1UL << 31) || checkpoint + distance < (1UL << 32)) {
+        return checkpoint + distance;
+    }
+    // 回倒
+    return checkpoint - ((1UL << 32) - distance);
 }
