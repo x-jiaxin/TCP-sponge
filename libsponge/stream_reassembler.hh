@@ -18,14 +18,14 @@ class StreamReassembler {
 
     uint64_t reassembler_bufsize = 0;
     uint64_t first_unassembled_index = 0;
-    std::unordered_set<uint64_t> write_flag_;
-    std::string buf_;
+    //    std::unordered_set<uint64_t> write_flag_;
+    //    std::string buf_;
     bool is_eof = false;
 
-    //    std::list<std::pair<uint64_t, std::string>> _reassembler_buf{};
+    std::list<std::pair<uint64_t, std::string>> _reassembler_buf{};
 
-    //    void insert_buf(uint64_t first_index, std::string &&data, bool is_last);
-    //    void pop_buf();
+    void insert_buf(uint64_t first_index, std::string &&data, bool is_last);
+    void pop_buf();
 
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
