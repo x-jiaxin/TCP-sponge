@@ -12,7 +12,7 @@ void DUMMY_CODE(Targs &&.../* unused */) {}
 
 using namespace std;
 
-StreamReassembler::StreamReassembler(const size_t capacity) : _output(capacity), _capacity(capacity) {}
+StreamReassembler::StreamReassembler(const size_t capacity) : output_(capacity), capacity_(capacity) {}
 
 //! \details This function accepts a substring (aka a segment) of bytes,
 //! possibly out-of-order, from the logical stream, and assembles any newly
@@ -22,47 +22,47 @@ void StreamReassembler::push_substring(const string &data, const size_t first_in
     if (data.empty()) {
         // "" with eof
         if (is_last_substring) {
-            _output.end_input();
+            output_.end_input();
         }
         return;
     }
-    if (_output.remaining_capacity() == 0) {
+    if (output_.remaining_capacity() == 0) {
         return;
     }
     string s = data;
     const auto end_next_index = first_index + s.size();
-    const auto first_unaccept_index = _output.remaining_capacity() + _first_unassembled_index;
+    const auto first_unaccept_index = output_.remaining_capacity() + first_unassembled_index;
 
-    if (end_next_index <= _first_unassembled_index || first_index >= first_unaccept_index) {
+    if (end_next_index <= first_unassembled_index || first_index >= first_unaccept_index) {
         return;
     }
     // end_next_index > _first_unassembled_index && first_index < first_unaccept_index
     if (end_next_index > first_unaccept_index) {
         s = s.substr(0, first_unaccept_index - first_index);
-        _is_last_substr = false;
+        is_eof = false;
         is_last_substring = false;
     }
     // end_next_index < first_unaccept_index
 
-    if (first_index > _first_unassembled_index) {
+    if (first_index > first_unassembled_index) {
         insert_buf(first_index, std::move(s), is_last_substring);
         return;
     }
-    if (first_index < _first_unassembled_index) {
-        s = s.substr(_first_unassembled_index - first_index);
+    if (first_index < first_unassembled_index) {
+        s = s.substr(first_unassembled_index - first_index);
     }
     // first_index = _first_unassembled_index
-    _first_unassembled_index += s.size();
-    _output.write(s);
+    first_unassembled_index += s.size();
+    output_.write(s);
     if (is_last_substring) {
-        _output.end_input();
+        output_.end_input();
     }
-    if (!_reassembler_buf.empty() && _reassembler_buf.begin()->first <= _first_unassembled_index) {
+    if (!_reassembler_buf.empty() && _reassembler_buf.begin()->first <= first_unassembled_index) {
         pop_buf();
     }
 }
 
-size_t StreamReassembler::unassembled_bytes() const { return _reassembler_bufsize; }
+size_t StreamReassembler::unassembled_bytes() const { return reassembler_bufsize; }
 
 bool StreamReassembler::empty() const { return _reassembler_buf.empty(); }
 void StreamReassembler::insert_buf(uint64_t first_index, string &&data, bool is_last) {
@@ -83,7 +83,7 @@ void StreamReassembler::insert_buf(uint64_t first_index, string &&data, bool is_
 
         // full insert
         if (begin_index == first_index && end_next_index <= it->first) {
-            _reassembler_bufsize += data.size();
+            reassembler_bufsize += data.size();
             // insert before it
             _reassembler_buf.emplace(it, begin_index, std::move(data));
             return;
@@ -92,40 +92,40 @@ void StreamReassembler::insert_buf(uint64_t first_index, string &&data, bool is_
         const auto right_next_index = min(it->first, end_next_index);
         const auto len = right_next_index - begin_index;
         _reassembler_buf.emplace(it, begin_index, data.substr(begin_index - first_index, len));
-        _reassembler_bufsize += len;
+        reassembler_bufsize += len;
         begin_index = right_next_index;
     }
     if (end_next_index > begin_index) {
-        _reassembler_bufsize += end_next_index - begin_index;
+        reassembler_bufsize += end_next_index - begin_index;
         _reassembler_buf.emplace_back(begin_index, data.substr(begin_index - first_index));
     }
     if (is_last) {
-        _is_last_substr = true;
+        is_eof = true;
     }
 }
 void StreamReassembler::pop_buf() {
     //_reassembler_buf.begin()->first <= _first_unassembled_index
     for (auto it = _reassembler_buf.begin(); it != _reassembler_buf.end();) {
-        if (it->first > _first_unassembled_index) {
+        if (it->first > first_unassembled_index) {
             break;
         }
         // it->first <= _first_unassembled_index
         const auto end = it->first + it->second.size();
-        if (end <= _first_unassembled_index) {
-            _reassembler_bufsize -= it->second.size();
+        if (end <= first_unassembled_index) {
+            reassembler_bufsize -= it->second.size();
         } else {
             auto data = std::move(it->second);
-            _reassembler_bufsize -= data.size();
-            if (it->first < _first_unassembled_index) {
-                data = data.substr(_first_unassembled_index - it->first);
+            reassembler_bufsize -= data.size();
+            if (it->first < first_unassembled_index) {
+                data = data.substr(first_unassembled_index - it->first);
             }
-            _first_unassembled_index += data.size();
-            _output.write(data);
+            first_unassembled_index += data.size();
+            output_.write(data);
         }
         //    最后移除元素之后的迭代器。
         it = _reassembler_buf.erase(it);
     }
-    if (_reassembler_buf.empty() && _is_last_substr) {
-        _output.end_input();
+    if (_reassembler_buf.empty() && is_eof) {
+        output_.end_input();
     }
 }

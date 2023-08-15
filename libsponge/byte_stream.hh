@@ -17,12 +17,13 @@ class ByteStream {
   private:
     // Your code here -- add private members as necessary.
 
-    uint64_t _capacity;
-    bool _error;  //!< Flag indicating that the stream suffered an error.
-    bool _end_input;
-    uint64_t _write_count;
-    uint64_t _read_count;
-    std::deque<std::string> _buf;
+    uint64_t capacity_;
+    bool error_;  //!< Flag indicating that the stream suffered an error.
+    bool end_input_;
+    uint64_t write_count_;
+    uint64_t read_count_;
+    //    std::deque<std::string> buf_;
+    std::deque<char> buf_;
 
   public:
     //! Construct a stream with room for `capacity` bytes.
@@ -43,7 +44,7 @@ class ByteStream {
     void end_input();
 
     //! Indicate that the stream suffered an error.
-    void set_error() { _error = true; }
+    void set_error() { error_ = true; }
     //!@}
 
     //! \name "Output" interface for the reader
@@ -68,7 +69,7 @@ class ByteStream {
     bool input_ended() const;
 
     //! \returns `true` if the stream has suffered an error
-    bool error() const { return _error; }
+    bool error() const { return error_; }
 
     //! \returns the maximum amount that can currently be read from the stream
     size_t buffer_size() const;

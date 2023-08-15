@@ -17,7 +17,7 @@ void DUMMY_CODE(Targs &&.../* unused */) {}
 using namespace std;
 
 ByteStream::ByteStream(const size_t capacity)
-    : _capacity(capacity), _error(false), _end_input(false), _write_count(0), _read_count(0), _buf({}) {
+    : capacity_(capacity), error_(false), end_input_(false), write_count_(0), read_count_(0), buf_({}) {
     DUMMY_CODE(capacity);
 }
 
@@ -29,8 +29,8 @@ size_t ByteStream::write(const string &data) {
     } else {
         str = data;
     }
-    _buf.push_back(std::move(str));
-    _write_count += len;
+    buf_.push_back(std::move(str));
+    write_count_ += len;
     return len;
 }
 
@@ -41,15 +41,15 @@ string ByteStream::peek_output(const size_t len) const {
         return "";
     }
     size_t pop_len = buffer_size() > len ? len : buffer_size();
-    if (_buf.front().size() > pop_len) {
-        return _buf.front().substr(0, pop_len);
-    } else if (_buf.front().size() == pop_len) {
-        return _buf.front();
+    if (buf_.front().size() > pop_len) {
+        return buf_.front().substr(0, pop_len);
+    } else if (buf_.front().size() == pop_len) {
+        return buf_.front();
     } else {
         string str;
-        auto it = _buf.begin();
+        auto it = buf_.begin();
         //        while (it->size() <= pop_len) {
-        while (it != _buf.end() && it->size() <= pop_len) {
+        while (it != buf_.end() && it->size() <= pop_len) {
             str += *it;
             pop_len -= it->size();
             ++it;
@@ -67,41 +67,41 @@ void ByteStream::pop_output(const size_t len) {
         return;
     }
     size_t pop_len = buffer_size() > len ? len : buffer_size();
-    _read_count += pop_len;
-    if (_buf.front().size() > pop_len) {
-        _buf.front().erase(0, pop_len);
-    } else if (_buf.front().size() == pop_len) {
-        _buf.pop_front();
+    read_count_ += pop_len;
+    if (buf_.front().size() > pop_len) {
+        buf_.front().erase(0, pop_len);
+    } else if (buf_.front().size() == pop_len) {
+        buf_.pop_front();
     } else {
         // 判空
-        while (!_buf.empty() && _buf.front().size() <= pop_len) {
-            pop_len -= _buf.front().size();
-            _buf.pop_front();
+        while (!buf_.empty() && buf_.front().size() <= pop_len) {
+            pop_len -= buf_.front().size();
+            buf_.pop_front();
         }
         if (pop_len > 0) {
-            _buf.front().erase(0, pop_len);
+            buf_.front().erase(0, pop_len);
         }
     }
 }
 
-void ByteStream::end_input() { _end_input = true; }
+void ByteStream::end_input() { end_input_ = true; }
 
-bool ByteStream::input_ended() const { return _end_input; }
+bool ByteStream::input_ended() const { return end_input_; }
 
 size_t ByteStream::buffer_size() const {
     size_t _buf_bytes_size = 0;
-    for (const auto &buf : _buf) {
+    for (const auto &buf : buf_) {
         _buf_bytes_size += buf.size();
     }
     return _buf_bytes_size;
 }
 
-bool ByteStream::buffer_empty() const { return _buf.empty(); }
+bool ByteStream::buffer_empty() const { return buf_.empty(); }
 
-bool ByteStream::eof() const { return _end_input && _buf.empty(); }
+bool ByteStream::eof() const { return end_input_ && buf_.empty(); }
 
-size_t ByteStream::bytes_written() const { return _write_count; }
+size_t ByteStream::bytes_written() const { return write_count_; }
 
-size_t ByteStream::bytes_read() const { return _read_count; }
+size_t ByteStream::bytes_read() const { return read_count_; }
 
-size_t ByteStream::remaining_capacity() const { return _capacity - buffer_size(); }
+size_t ByteStream::remaining_capacity() const { return capacity_ - buffer_size(); }

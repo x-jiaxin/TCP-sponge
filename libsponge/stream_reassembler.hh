@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <string>
+#include <unordered_set>
 
 //! \brief A class that assembles a series of excerpts from a byte stream (possibly out of order,
 //! possibly overlapping) into an in-order byte stream.
@@ -12,16 +13,19 @@ class StreamReassembler {
   private:
     // Your code here -- add private members as necessary.
 
-    ByteStream _output;  //!< The reassembled in-order byte stream
-    size_t _capacity;    //!< The maximum number of bytes
+    ByteStream output_;  //!< The reassembled in-order byte stream
+    size_t capacity_;    //!< The maximum number of bytes
 
-    uint64_t _reassembler_bufsize = 0;
-    uint64_t _first_unassembled_index = 0;
-    bool _is_last_substr = false;
-    std::list<std::pair<uint64_t, std::string>> _reassembler_buf{};
+    uint64_t reassembler_bufsize = 0;
+    uint64_t first_unassembled_index = 0;
+    std::unordered_set<uint64_t> write_flag_;
+    std::string buf_;
+    bool is_eof = false;
 
-    void insert_buf(uint64_t first_index, std::string &&data, bool is_last);
-    void pop_buf();
+    //    std::list<std::pair<uint64_t, std::string>> _reassembler_buf{};
+
+    //    void insert_buf(uint64_t first_index, std::string &&data, bool is_last);
+    //    void pop_buf();
 
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
@@ -41,8 +45,8 @@ class StreamReassembler {
 
     //! \name Access the reassembled byte stream
     //!@{
-    const ByteStream &stream_out() const { return _output; }
-    ByteStream &stream_out() { return _output; }
+    const ByteStream &stream_out() const { return output_; }
+    ByteStream &stream_out() { return output_; }
     //!@}
 
     //! The number of bytes in the substrings stored but not yet reassembled

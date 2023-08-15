@@ -46,9 +46,11 @@ void TCPSender::fill_window() {
         return;
     }
     // 在接受者窗口范围内
-    while (!_stream.buffer_empty() && _recv_seqno + win_size > _next_seqno) {
+    //    while (!_stream.buffer_empty() && _recv_seqno + win_size > _next_seqno) {
+    while (!_stream.buffer_empty() && bytes_in_flight_ < win_size) {
         // 窗口剩余容量
-        size_t send_size = min(TCPConfig::MAX_PAYLOAD_SIZE, size_t(win_size - (_next_seqno - _recv_seqno)));
+        //        size_t send_size = min(TCPConfig::MAX_PAYLOAD_SIZE, size_t(win_size - (_next_seqno - _recv_seqno)));
+        size_t send_size = min(TCPConfig::MAX_PAYLOAD_SIZE, size_t(win_size - bytes_in_flight_));
         msg.payload() = _stream.read(min(send_size, _stream.buffer_size()));
         if (_stream.eof() && msg.length_in_sequence_space() < win_size) {
             msg.header().fin = true;
